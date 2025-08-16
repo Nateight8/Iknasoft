@@ -66,11 +66,19 @@ export function BulkActionsToolbar({
             <Select
               onValueChange={(value) => onBulkAction("changeStage", value)}
             >
-              <SelectTrigger className="h-8 w-32 bg-primary-foreground/20 border-primary-foreground/20 text-primary-foreground">
-                <SelectValue placeholder="Change stage" className="text-primary-foreground" />
+              <SelectTrigger className="h-8 w-32 bg-primary-foreground/20 border-primary-foreground/20 text-primary-foreground data-[state=checked]:text-green-600">
+                <SelectValue
+                  placeholder="Change stage"
+                  className="text-primary-foreground [&>span]:text-green-600"
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="discovery">Discovery</SelectItem>
+                <SelectItem
+                  // className="data-[state=checked]:text-green-600"
+                  value="discovery"
+                >
+                  Discovery
+                </SelectItem>
                 <SelectItem value="proposal">Proposal</SelectItem>
                 <SelectItem value="negotiation">Negotiation</SelectItem>
                 <SelectItem value="closed-won">Closed Won</SelectItem>
@@ -82,7 +90,10 @@ export function BulkActionsToolbar({
               onValueChange={(value) => onBulkAction("changeOwner", value)}
             >
               <SelectTrigger className="h-8 w-32 bg-primary-foreground/20 border-primary-foreground/20 text-primary-foreground">
-                <SelectValue placeholder="Assign to" className="text-primary-foreground" />
+                <SelectValue
+                  placeholder="Assign to"
+                  className="text-primary-foreground"
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="alex-chen">Alex Chen</SelectItem>
