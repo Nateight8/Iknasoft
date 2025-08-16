@@ -311,7 +311,7 @@ export function DealsTable() {
         dealValueRange: [0, 200000],
       },
       sorts: [],
-      columnWidths: {}
+      columnWidths: {},
     };
 
     if (typeof window !== "undefined") {
@@ -333,7 +333,7 @@ export function DealsTable() {
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(
     uiState.columnConfig || defaultColumnConfig
   );
-  
+
   // Sync columnConfig with uiState when it changes
   useEffect(() => {
     if (uiState.columnConfig && uiState.columnConfig.length > 0) {
@@ -347,10 +347,10 @@ export function DealsTable() {
     owner: [],
     dealValueRange: [0, 200000],
   });
-  
+
   const [sorts, setSorts] = useState<SortState[]>([]);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  
+
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({
     select: DEFAULT_COLUMN_WIDTHS.select,
     expand: DEFAULT_COLUMN_WIDTHS.expand,
@@ -369,50 +369,60 @@ export function DealsTable() {
     row: number;
     col: number;
   } | null>(null);
-  
+
   const [isNavigating, setIsNavigating] = useState(false);
   const [announcementMessage, setAnnouncementMessage] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const saveUIState = useCallback((newState: Partial<UIState>) => {
-    setUiState(prev => {
+    setUiState((prev) => {
       const updatedState: UIState = {
         ...prev,
         ...newState,
         columnConfig: newState.columnConfig || prev.columnConfig || [],
-        filters: newState.filters || prev.filters || {
-          search: "",
-          stage: [],
-          owner: [],
-          dealValueRange: [0, 200000],
-        },
+        filters: newState.filters ||
+          prev.filters || {
+            search: "",
+            stage: [],
+            owner: [],
+            dealValueRange: [0, 200000],
+          },
         sorts: newState.sorts || prev.sorts || [],
         rowSelection: newState.rowSelection || prev.rowSelection || {},
         headerValues: newState.headerValues || prev.headerValues || {},
-        selectedTemplates: newState.selectedTemplates || prev.selectedTemplates || [],
+        selectedTemplates:
+          newState.selectedTemplates || prev.selectedTemplates || [],
         expandedRows: newState.expandedRows || prev.expandedRows || [],
-        columnWidths: newState.columnWidths || prev.columnWidths || {}
+        columnWidths: newState.columnWidths || prev.columnWidths || {},
       };
-      
+
       if (typeof window !== "undefined") {
-        localStorage.setItem("deals-table-ui-state", JSON.stringify(updatedState));
+        localStorage.setItem(
+          "deals-table-ui-state",
+          JSON.stringify(updatedState)
+        );
       }
-      
+
       return updatedState;
     });
   }, []);
 
   const handleColumnResize = useCallback(
     (columnId: string, width: number) => {
-      setColumnWidths(prev => ({
+      setColumnWidths((prev) => ({
         ...prev,
-        [columnId]: width
+        [columnId]: width,
       }));
-      
+
       saveUIState({
         columnWidths: {
           ...columnWidths,
-          [columnId]: width
-        }
+          [columnId]: width,
+        },
       });
     },
     [columnWidths, saveUIState]
@@ -1028,14 +1038,18 @@ export function DealsTable() {
   }, [selectedTemplates, columnConfig, headerValues, columnWidths]);
 
   const visibleColumns = useMemo(() => {
-    const visible = columnConfig.filter((col) => col.visible);
-    console.log('Visible columns:', visible);
-    return visible;
+    // Always return the same columns, but control visibility with CSS
+    return columnConfig.filter((col) => col.visible);
   }, [columnConfig]);
   const dynamicColumns = useMemo(
     () => getDynamicColumns(),
     [getDynamicColumns]
   );
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -1090,9 +1104,45 @@ export function DealsTable() {
         />
       )}
 
-      <div className="rounded-md border">
+      <div
+        className="rounded-md border"
+        style={{
+          minHeight: "400px", // Adjust based on your needs
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
         <div className="overflow-x-auto">
-          <table className="w-full" style={{ minWidth: totalTableWidth }}>
+          <table
+            className="w-full"
+            style={{
+              minWidth: totalTableWidth,
+              visibility: isMounted ? "visible" : "hidden",
+              tableLayout: "fixed"
+            }}
+          >
+            <colgroup>
+              {visibleColumns.map(col => (
+                <col 
+                  key={col.id}
+                  style={{
+                    width: columnWidths[col.id] || col.width || '150px',
+                    minWidth: columnWidths[col.id] || col.width || '150px',
+                    maxWidth: columnWidths[col.id] || col.width || '150px'
+                  }}
+                />
+              ))}
+              {dynamicColumns.map(col => (
+                <col 
+                  key={col.id}
+                  style={{
+                    width: col.width,
+                    minWidth: col.width,
+                    maxWidth: col.width
+                  }}
+                />
+              ))}
+            </colgroup>
             <thead>
               <tr className="border-b bg-muted/50">
                 {visibleColumns.map((col) => (
@@ -1238,7 +1288,11 @@ export function DealsTable() {
                             <InlineEditor
                               value={String(value || "")}
                               onChange={(newValue: string | number) =>
-                                updateCellValue(deal.id, col.id, String(newValue))
+                                updateCellValue(
+                                  deal.id,
+                                  col.id,
+                                  String(newValue)
+                                )
                               }
                             />
                           )}
@@ -1269,7 +1323,11 @@ export function DealsTable() {
 
       <TotalsBar
         data={tableData}
-        selectedData={Object.keys(rowSelection).length > 0 ? tableData.filter(deal => rowSelection[deal.id]) : undefined}
+        selectedData={
+          Object.keys(rowSelection).length > 0
+            ? tableData.filter((deal) => rowSelection[deal.id])
+            : undefined
+        }
       />
     </div>
   );
